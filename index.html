@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+    <meta charset="utf-8">
+    <title>my second export PDF</title>
+    <script src="pdf.js"></script>
+    <script src="vfs_fonts.js"></script>
+    <script>
+    
+    function down() {
+        var x = new ImageDataURL(["2.png", "1111.png", "timg.jpg"]);
+        x.oncomplete = function() {
+            var imgs = new Array();
+            console.log("complete");
+            for (key in this.imgdata) {
+                if (this.imgdata[key] == this.emptyobj)//不存在的图片直接忽略
+                    continue;
+                imgs.push({image:this.imgdata[key]});//pdfmake的图片格式{image:image dataurl}
+            }
+            var dd = {
+                content: [
+                 '图片预览',
+                 imgs,
+                 ],
+            };
+            pdfMake.createPdf(dd).download();
+        }
+    }
+    </script>
+    </head>
+    <body>
+    <button onclick="down()">下载</button>
+    <script>
+    function ImageDataURL(urls) {//urls必须是字符串或字符串数组
+        this.completenum = 0;
+        this.totalnum = 0;
+        this.imgdata = new Array();
+        this.emptyobj = new Object();
+        this.oncomplete = function(){};
+        this.getDataURL = function(url, index) {
+            var c = document.createElement("canvas");
+            var cxt = c.getContext("2d");
+            var img = new Image();
+            var dataurl;
+            var p;
+            p = this;
+            img.src = url;
+            img.onload = function() {
+                var i;
+                var maxwidth = 500;
+                var scale = 1.0;
+                if (img.width > maxwidth) {
+                    scale = maxwidth / img.width;
+                    c.width = maxwidth;
+                    c.height = Math.floor(img.height * scale);
+                } else {
+                    c.width= img.width;
+                    c.height= img.height;
+                }
+                cxt.drawImage(img, 0, 0, c.width, c.height);
+
+                p.imgdata[index] = c.toDataURL('image/jpeg');
+                for (i = 0; i < p.totalnum; ++i) {
+                    if (p.imgdata[i] == null)
+                        break;
+                }
+                if (i == p.totalnum) {
+                    p.oncomplete();
+                }
+            };
+            img.onerror = function() {
+                p.imgdata[index] = p.emptyobj;
+                for (i = 0; i < p.totalnum; ++i) {
+                    if (p.imgdata[i] == null)
+                        break;
+                }
+                if (i == p.totalnum) {
+                    p.oncomplete();
+                }
+            };
+        }
+        if (urls instanceof Array) {
+            this.totalnum = urls.length; 
+            this.imgdata = new Array(this.totalnum);
+            for (key in urls) {
+                this.getDataURL(urls[key], key);
+            }
+        } else {
+            this.imgdata = new Array(1);
+            this.totalnum = 1;
+            this.getDataURL(urls, 0);
+        }
+    }
+
+    </script>
+    </body>
+</html>
